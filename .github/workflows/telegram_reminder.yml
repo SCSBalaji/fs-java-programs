@@ -2,8 +2,8 @@ name: Telegram Review Reminder
 
 on:
   schedule:
-    # Runs at 6:00 AM IST (12:30 AM UTC) every day
-    - cron: '30 0 * * *'
+    # Runs at 9:30 PM IST (4:00 PM UTC) every day
+    - cron: '0 16 * * *'
   
   workflow_dispatch:
 
