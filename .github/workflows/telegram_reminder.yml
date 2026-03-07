@@ -28,6 +28,11 @@ jobs:
           import os
           from datetime import datetime
           
+          def escape_md(text):
+              """Escape all MarkdownV2 reserved characters."""
+              reserved = r'_*[]()~`>#+-=|{}.!'
+              return ''.join(f'\\{c}' if c in reserved else c for c in str(text))
+          
           reviews_file = 'stats/reviews.json'
           
           if not os.path.exists(reviews_file):
@@ -49,7 +54,7 @@ jobs:
                   continue
               
               entry = {
-                  'key': key,                                   # e.g. "Day-01/Program-1"
+                  'key': key,
                   'title': info.get('title', key),
                   'review_count': info.get('review_count', 0),
                   'solution_count': info.get('solution_count', 0),
@@ -69,60 +74,64 @@ jobs:
                   f.write("has_due=false\n")
               exit(0)
           
-          # Sort each group by key
           overdue_programs.sort(key=lambda x: (x['next_review'], x['key']))
           due_programs.sort(key=lambda x: x['key'])
           
-          # Build Telegram message
-          message = "☕ *Java Programs - Daily Review Reminder*\n"
-          message += "═" * 35 + "\n\n"
-          message += f"📅 *{datetime.now().strftime('%B %d, %Y')}*\n"
+          date_str = escape_md(datetime.now().strftime('%B %d, %Y'))
+          
+          # Build message using plain text to avoid MarkdownV2 issues
+          # Only use *bold* on simple safe strings
+          message = "☕ *Java Programs \\- Daily Review Reminder*\n"
+          message += "═" * 30 + "\n\n"
+          message += f"📅 *{date_str}*\n"
           message += f"📊 Total due: *{len(all_due)}*"
           
           if overdue_programs:
-              message += f"  \\(⚠️ {len(overdue_programs)} overdue\\)"
+              message += f" \\(⚠️ {len(overdue_programs)} overdue\\)"
           
           message += "\n\n"
           
           # Overdue section
           if overdue_programs:
-              message += f"⚠️ *OVERDUE — {len(overdue_programs)} program(s):*\n"
-              message += "─" * 30 + "\n"
+              message += f"⚠️ *OVERDUE \\— {len(overdue_programs)} program\\(s\\):*\n"
+              message += "\\-" * 20 + "\n"
               for i, p in enumerate(overdue_programs, 1):
-                  message += f"{i}\\. *{p['key']}*\n"
-                  message += f"   📝 {p['title']}\n"
-                  message += f"   Review \\#{p['review_count'] + 1} \\| Was due: {p['next_review']} \\| {p['solution_count']} solution\\(s\\)\n\n"
+                  key_escaped   = escape_md(p['key'])
+                  title_escaped = escape_md(p['title'])
+                  due_escaped   = escape_md(p['next_review'])
+                  message += f"{i}\\. *{key_escaped}*\n"
+                  message += f"   📝 {title_escaped}\n"
+                  message += f"   Review \\#{p['review_count'] + 1} \\| Was due: {due_escaped} \\| {p['solution_count']} solution\\(s\\)\n\n"
           
           # Due today section
           if due_programs:
-              message += f"📚 *DUE TODAY — {len(due_programs)} program(s):*\n"
-              message += "─" * 30 + "\n"
+              message += f"📚 *DUE TODAY \\— {len(due_programs)} program\\(s\\):*\n"
+              message += "\\-" * 20 + "\n"
               for i, p in enumerate(due_programs, 1):
-                  message += f"{i}\\. *{p['key']}*\n"
-                  message += f"   📝 {p['title']}\n"
+                  key_escaped   = escape_md(p['key'])
+                  title_escaped = escape_md(p['title'])
+                  message += f"{i}\\. *{key_escaped}*\n"
+                  message += f"   📝 {title_escaped}\n"
                   message += f"   Review \\#{p['review_count'] + 1} \\| {p['solution_count']} solution\\(s\\)\n\n"
           
-          message += "─" * 30 + "\n\n"
+          message += "\\-" * 20 + "\n\n"
           message += "✅ *After reviewing, mark complete:*\n"
-          message += "`python scripts/schedule_review.py mark <day> <program>`\n\n"
+          message += "`python scripts/schedule\\_review\\.py mark <day> <program>`\n\n"
           message += "*Examples:*\n"
           
-          # Auto-generate mark commands for all due programs
-          for p in all_due[:5]:  # Show first 5 examples max
-              parts = p['key'].split('/')          # ["Day-01", "Program-1"]
-              day_num = parts[0].split('-')[1]     # "01"
-              prog_num = parts[1].split('-')[1]    # "1"
-              day_int = str(int(day_num))          # "1"
-              message += f"`python scripts/schedule_review.py mark {day_int} {prog_num}`\n"
+          for p in all_due[:5]:
+              parts    = p['key'].split('/')
+              day_num  = parts[0].split('-')[1]   # "01"
+              prog_num = parts[1].split('-')[1]   # "1"
+              day_int  = str(int(day_num))         # "1"
+              message += f"`python scripts/schedule\\_review\\.py mark {day_int} {prog_num}`\n"
           
           message += "\nHappy Coding\\! 🚀"
           
-          # Write outputs
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write("has_due=true\n")
               f.write(f"count={len(all_due)}\n")
           
-          # Save message to file
           with open('telegram_message.txt', 'w', encoding='utf-8') as f:
               f.write(message)
           
