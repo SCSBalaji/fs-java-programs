@@ -1,0 +1,146 @@
+name: Telegram Review Reminder
+
+on:
+  schedule:
+    # Runs at 6:00 AM IST (12:30 AM UTC) every day
+    - cron: '30 0 * * *'
+  
+  workflow_dispatch:
+
+jobs:
+  send-telegram-reminder:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Check due reviews and prepare message
+        id: check-reviews
+        run: |
+          python << 'EOF'
+          import json
+          import os
+          from datetime import datetime
+          
+          reviews_file = 'stats/reviews.json'
+          
+          if not os.path.exists(reviews_file):
+              print("No reviews scheduled yet.")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("has_due=false\n")
+              exit(0)
+          
+          with open(reviews_file, 'r') as f:
+              data = json.load(f)
+          
+          today = datetime.now().strftime('%Y-%m-%d')
+          due_programs = []
+          overdue_programs = []
+          
+          for key, info in data.items():
+              next_review = info.get('next_review')
+              if not next_review:
+                  continue
+              
+              entry = {
+                  'key': key,                                   # e.g. "Day-01/Program-1"
+                  'title': info.get('title', key),
+                  'review_count': info.get('review_count', 0),
+                  'solution_count': info.get('solution_count', 0),
+                  'next_review': next_review
+              }
+              
+              if next_review == today:
+                  due_programs.append(entry)
+              elif next_review < today:
+                  overdue_programs.append(entry)
+          
+          all_due = overdue_programs + due_programs
+          
+          if not all_due:
+              print("No programs due for review today!")
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write("has_due=false\n")
+              exit(0)
+          
+          # Sort each group by key
+          overdue_programs.sort(key=lambda x: (x['next_review'], x['key']))
+          due_programs.sort(key=lambda x: x['key'])
+          
+          # Build Telegram message
+          message = "☕ *Java Programs - Daily Review Reminder*\n"
+          message += "═" * 35 + "\n\n"
+          message += f"📅 *{datetime.now().strftime('%B %d, %Y')}*\n"
+          message += f"📊 Total due: *{len(all_due)}*"
+          
+          if overdue_programs:
+              message += f"  \\(⚠️ {len(overdue_programs)} overdue\\)"
+          
+          message += "\n\n"
+          
+          # Overdue section
+          if overdue_programs:
+              message += f"⚠️ *OVERDUE — {len(overdue_programs)} program(s):*\n"
+              message += "─" * 30 + "\n"
+              for i, p in enumerate(overdue_programs, 1):
+                  message += f"{i}\\. *{p['key']}*\n"
+                  message += f"   📝 {p['title']}\n"
+                  message += f"   Review \\#{p['review_count'] + 1} \\| Was due: {p['next_review']} \\| {p['solution_count']} solution\\(s\\)\n\n"
+          
+          # Due today section
+          if due_programs:
+              message += f"📚 *DUE TODAY — {len(due_programs)} program(s):*\n"
+              message += "─" * 30 + "\n"
+              for i, p in enumerate(due_programs, 1):
+                  message += f"{i}\\. *{p['key']}*\n"
+                  message += f"   📝 {p['title']}\n"
+                  message += f"   Review \\#{p['review_count'] + 1} \\| {p['solution_count']} solution\\(s\\)\n\n"
+          
+          message += "─" * 30 + "\n\n"
+          message += "✅ *After reviewing, mark complete:*\n"
+          message += "`python scripts/schedule_review.py mark <day> <program>`\n\n"
+          message += "*Examples:*\n"
+          
+          # Auto-generate mark commands for all due programs
+          for p in all_due[:5]:  # Show first 5 examples max
+              parts = p['key'].split('/')          # ["Day-01", "Program-1"]
+              day_num = parts[0].split('-')[1]     # "01"
+              prog_num = parts[1].split('-')[1]    # "1"
+              day_int = str(int(day_num))          # "1"
+              message += f"`python scripts/schedule_review.py mark {day_int} {prog_num}`\n"
+          
+          message += "\nHappy Coding\\! 🚀"
+          
+          # Write outputs
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write("has_due=true\n")
+              f.write(f"count={len(all_due)}\n")
+          
+          # Save message to file
+          with open('telegram_message.txt', 'w', encoding='utf-8') as f:
+              f.write(message)
+          
+          print(f"Found {len(all_due)} program(s) due for review ({len(overdue_programs)} overdue, {len(due_programs)} today)!")
+          EOF
+      
+      - name: Send Telegram notification
+        if: steps.check-reviews.outputs.has_due == 'true'
+        run: |
+          MESSAGE=$(cat telegram_message.txt)
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
+              \"text\": \"$MESSAGE\",
+              \"parse_mode\": \"MarkdownV2\"
+            }"
+      
+      - name: No reviews due
+        if: steps.check-reviews.outputs.has_due == 'false'
+        run: echo "✅ No programs due for review today!"
