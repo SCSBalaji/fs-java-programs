@@ -2,24 +2,22 @@ name: Telegram Review Reminder
 
 on:
   schedule:
-    # Runs at 9:30 PM IST (4:00 PM UTC) every day
     - cron: '0 16 * * *'
-  
   workflow_dispatch:
 
 jobs:
   send-telegram-reminder:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Check due reviews and prepare message
         id: check-reviews
         run: |
@@ -27,32 +25,32 @@ jobs:
           import json
           import os
           from datetime import datetime
-          
+
           def escape_md(text):
               """Escape all MarkdownV2 reserved characters."""
               reserved = r'_*[]()~`>#+-=|{}.!'
               return ''.join(f'\\{c}' if c in reserved else c for c in str(text))
-          
+
           reviews_file = 'stats/reviews.json'
-          
+
           if not os.path.exists(reviews_file):
               print("No reviews scheduled yet.")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write("has_due=false\n")
               exit(0)
-          
+
           with open(reviews_file, 'r') as f:
               data = json.load(f)
-          
+
           today = datetime.now().strftime('%Y-%m-%d')
           due_programs = []
           overdue_programs = []
-          
+
           for key, info in data.items():
               next_review = info.get('next_review')
               if not next_review:
                   continue
-              
+
               entry = {
                   'key': key,
                   'title': info.get('title', key),
@@ -60,37 +58,35 @@ jobs:
                   'solution_count': info.get('solution_count', 0),
                   'next_review': next_review
               }
-              
+
               if next_review == today:
                   due_programs.append(entry)
               elif next_review < today:
                   overdue_programs.append(entry)
-          
+
           all_due = overdue_programs + due_programs
-          
+
           if not all_due:
               print("No programs due for review today!")
               with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
                   f.write("has_due=false\n")
               exit(0)
-          
+
           overdue_programs.sort(key=lambda x: (x['next_review'], x['key']))
           due_programs.sort(key=lambda x: x['key'])
-          
+
           date_str = escape_md(datetime.now().strftime('%B %d, %Y'))
-          
-          # Build message using plain text to avoid MarkdownV2 issues
-          # Only use *bold* on simple safe strings
+
           message = "☕ *Java Programs \\- Daily Review Reminder*\n"
           message += "═" * 30 + "\n\n"
           message += f"📅 *{date_str}*\n"
           message += f"📊 Total due: *{len(all_due)}*"
-          
+
           if overdue_programs:
               message += f" \\(⚠️ {len(overdue_programs)} overdue\\)"
-          
+
           message += "\n\n"
-          
+
           # Overdue section
           if overdue_programs:
               message += f"⚠️ *OVERDUE \\— {len(overdue_programs)} program\\(s\\):*\n"
@@ -102,7 +98,7 @@ jobs:
                   message += f"{i}\\. *{key_escaped}*\n"
                   message += f"   📝 {title_escaped}\n"
                   message += f"   Review \\#{p['review_count'] + 1} \\| Was due: {due_escaped} \\| {p['solution_count']} solution\\(s\\)\n\n"
-          
+
           # Due today section
           if due_programs:
               message += f"📚 *DUE TODAY \\— {len(due_programs)} program\\(s\\):*\n"
@@ -113,43 +109,47 @@ jobs:
                   message += f"{i}\\. *{key_escaped}*\n"
                   message += f"   📝 {title_escaped}\n"
                   message += f"   Review \\#{p['review_count'] + 1} \\| {p['solution_count']} solution\\(s\\)\n\n"
-          
+
           message += "\\-" * 20 + "\n\n"
           message += "✅ *After reviewing, mark complete:*\n"
-          message += "`python scripts/schedule\\_review\\.py mark <day> <program>`\n\n"
+          message += "`python scripts/schedule_review.py mark <day> <program>`\n\n"
           message += "*Examples:*\n"
-          
+
           for p in all_due[:5]:
               parts    = p['key'].split('/')
-              day_num  = parts[0].split('-')[1]   # "01"
-              prog_num = parts[1].split('-')[1]   # "1"
-              day_int  = str(int(day_num))         # "1"
-              message += f"`python scripts/schedule\\_review\\.py mark {day_int} {prog_num}`\n"
-          
+              day_num  = parts[0].split('-')[1]
+              prog_num = parts[1].split('-')[1]
+              day_int  = str(int(day_num))
+              message += f"`python scripts/schedule_review.py mark {day_int} {prog_num}`\n"
+
           message += "\nHappy Coding\\! 🚀"
-          
+
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write("has_due=true\n")
               f.write(f"count={len(all_due)}\n")
-          
+
           with open('telegram_message.txt', 'w', encoding='utf-8') as f:
               f.write(message)
-          
+
           print(f"Found {len(all_due)} program(s) due for review ({len(overdue_programs)} overdue, {len(due_programs)} today)!")
           EOF
-      
+
       - name: Send Telegram notification
         if: steps.check-reviews.outputs.has_due == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          MESSAGE=$(cat telegram_message.txt)
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${{ secrets.TELEGRAM_CHAT_ID }}\",
-              \"text\": \"$MESSAGE\",
-              \"parse_mode\": \"MarkdownV2\"
-            }"
-      
+          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text@telegram_message.txt" \
+            --data-urlencode "parse_mode=MarkdownV2")
+          echo "$RESPONSE"
+          if echo "$RESPONSE" | grep -q '"ok":false'; then
+            echo "::error::Telegram API returned an error"
+            exit 1
+          fi
+
       - name: No reviews due
         if: steps.check-reviews.outputs.has_due == 'false'
         run: echo "✅ No programs due for review today!"
