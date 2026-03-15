@@ -3,8 +3,48 @@
     "title": "Day 1 - Program 1",
     "path": "Day-01\\Program-1",
     "solution_count": 5,
+    "review_count": 4,
+    "last_reviewed": "2026-03-15",
+    "next_review": "2026-03-29"
+  },
+  "Day-01/Program-2": {
+    "title": "Day 1 - Program 2",
+    "path": "Day-01\\Program-2",
+    "solution_count": 7,
+    "review_count": 3,
+    "last_reviewed": "2026-03-15",
+    "next_review": "2026-03-22"
+  },
+  "Day-05/Program-1": {
+    "title": "Day 5 - Program 1",
+    "path": "Day-05\\Program-1",
+    "solution_count": 6,
+    "review_count": 2,
+    "last_reviewed": "2026-03-09",
+    "next_review": "2026-03-12"
+  },
+  "Day-05/Program-2": {
+    "title": "Day 5 - Program 2",
+    "path": "Day-05\\Program-2",
+    "solution_count": 8,
+    "review_count": 2,
+    "last_reviewed": "2026-03-09",
+    "next_review": "2026-03-12"
+  },
+  "Day-04/Program-1": {
+    "title": "Day 4 - Program 1",
+    "path": "Day-04\\Program-1",
+    "solution_count": 8,
+    "review_count": 2,
+    "last_reviewed": "2026-03-09",
+    "next_review": "2026-03-12"
+  },
+  "Day-13/Program-3": {
+    "title": "Day 13 - Program 3",
+    "path": "Day-13\\Program-3",
+    "solution_count": 5,
     "review_count": 1,
-    "last_reviewed": "2026-03-07",
-    "next_review": "2026-03-08"
+    "last_reviewed": "2026-03-15",
+    "next_review": "2026-03-16"
   }
 }
