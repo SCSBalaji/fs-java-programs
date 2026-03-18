@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n)
 // S.C: O(n) 
-public class NewArray {
+class NewArray {
     public static void reverse(int [] arr, int [] reversed, int i) {
         if (i >= arr.length) {
             return;

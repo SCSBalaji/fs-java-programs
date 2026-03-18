@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n) 
 // S.C: O(n)
-public class Recursion {
+class Recursion {
     public static int solve(int [] arr, int [] result, int index, int leftProduct) {
         if (index == arr.length) {
             return 1;

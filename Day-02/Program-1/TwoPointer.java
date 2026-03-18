@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n) 
 // S.C: O(1)
-public class TwoPointer {
+class TwoPointer {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         String str = sc.next();

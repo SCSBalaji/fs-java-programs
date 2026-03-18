@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n × k log k)
 // S.C: O(k) 
-public class BruteForceSorting {
+class BruteForceSorting {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();

@@ -2,7 +2,7 @@ import java.util.*;
 import java.util.Stack;
 // T.C: O(n)
 // S.C: O(n)
-public class RecursiveStack {
+class RecursiveStack {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();

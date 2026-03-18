@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n)
 // S.C: O(n) 
-public class RecursivePrinting {
+class RecursivePrinting {
     public static void printReverse(int [] arr, int idx) {
         if (idx < 0) {
             return;

@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n²)
 // S.C: O(n) 
-public class Recursion {
+class Recursion {
     static int max = 0;
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);

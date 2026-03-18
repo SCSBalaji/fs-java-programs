@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n) 
 // S.C: O(n)
-public class UsingLinkedlist {
+class UsingLinkedlist {
     static class Node {
         int data;
         Node next;

@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n²)
 // S.C: O(n) 
-public class Linkedlist {
+class Linkedlist {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         LinkedList<Integer> list = new LinkedList<>();

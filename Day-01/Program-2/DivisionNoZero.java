@@ -2,7 +2,7 @@ import java.util.*;
 // T.C: O(n) 
 // S.C: O(n)
 // Not allowed according to given constraints
-public class DivisionNoZero {
+class DivisionNoZero {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();

@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n) 
 // S.C: O(n)
-public class Recursion {
+class Recursion {
     static String s;
     static int idx = 0;
     static StringBuilder result = new StringBuilder();

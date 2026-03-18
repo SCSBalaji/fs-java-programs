@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n²)
 // S.C: O(1) 
-public class BruteForceOptimized {
+class BruteForceOptimized {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         int n = sc.nextInt();

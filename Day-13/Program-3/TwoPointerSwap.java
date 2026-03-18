@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n)
 // S.C: O(n) 
-public class TwoPointerSwap {
+class TwoPointerSwap {
     public static void reverse(int [] arr, int left, int right) {
         if (left >= right) {
             return;

@@ -1,7 +1,7 @@
 import java.util.*;
 // T.C: O(n)
 // S.C: O(n) 
-public class SwapMirrorPosition {
+class SwapMirrorPosition {
     public static void reverse(int [] arr, int i) {
         int j = arr.length - 1 - i;
         if (i >= j) {
